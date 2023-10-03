@@ -1,29 +1,35 @@
 import { auth, currentUser } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import prismadb from "@/lib/prismadb";
 import { checkSubscription } from "@/lib/subscription";
+
+export async function GET(req: NextRequest) {
+  try {
+    const body = req.nextUrl.searchParams;
+    const user = await prismadb.user.findFirst({
+      where: {
+        email: body["email"],
+      },
+    });
+    return new NextResponse(JSON.stringify(user));
+  } catch (error) {
+    console.log("[COMPANION_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const user = await currentUser();
-    const { src, name, description, instructions, seed, categoryId, email } =
-      body;
+    const { src, name, categoryId, email } = body;
 
     if (!user || !user.id || !user.firstName) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (
-      !src ||
-      !name ||
-      !description ||
-      !instructions ||
-      !seed ||
-      !categoryId ||
-      !email
-    ) {
+    if (!src || !name || !categoryId || !email) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
@@ -41,9 +47,6 @@ export async function POST(req: Request) {
         email,
         src,
         name,
-        description,
-        instructions,
-        seed,
         role: "user",
       },
     });

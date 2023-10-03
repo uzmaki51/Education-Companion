@@ -30,7 +30,7 @@ export async function POST(
       return new NextResponse("Rate limit exceeded", { status: 429 });
     }
 
-    const companion = await prismadb.companion.update({
+    const companion = await prismadb.user.update({
       where: {
         id: params.chatId
       },
@@ -126,7 +126,7 @@ export async function POST(
     if (response !== undefined && response.length > 1) {
       memoryManager.writeToHistory("" + response.trim(), companionKey);
 
-      await prismadb.companion.update({
+      await prismadb.user.update({
         where: {
           id: params.chatId
         },

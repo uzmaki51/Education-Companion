@@ -5,9 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { useProModal } from "@/hooks/use-pro-modal";
-import { useUser } from "@clerk/nextjs";
-import { useMemo } from "react";
-import axios from "axios";
 
 interface SidebarProps {
   isPro: boolean;
@@ -17,13 +14,6 @@ export const Sidebar = ({ isPro }: SidebarProps) => {
   const proModal = useProModal();
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUser();
-  console.log(user?.emailAddresses[0].emailAddress);
-
-  const UserData = useMemo(async () => {
-    return await axios.get(`/api/user/${user?.emailAddresses[0].emailAddress}`);
-  }, [user]);
-  console.log(UserData);
 
   const onNavigate = (url: string, pro: boolean) => {
     if (pro && !isPro) {
@@ -44,12 +34,6 @@ export const Sidebar = ({ isPro }: SidebarProps) => {
       icon: Plus,
       href: "/companion/new",
       label: "Create",
-      pro: false,
-    },
-    {
-      icon: Settings,
-      href: "/settings",
-      label: "Settings",
       pro: false,
     },
   ];

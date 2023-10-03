@@ -34,7 +34,7 @@ export const ChatHeader = ({
 
   const onDelete = async () => {
     try {
-      await axios.delete(`/api/companion/${companion.id}`);
+      await axios.delete(`/api/user/${companion.id}`);
       toast({
         description: "Success."
       });
