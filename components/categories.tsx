@@ -1,18 +1,18 @@
 "use client";
 
 import qs from "query-string";
-import { Category } from "@prisma/client"
+import { Category } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 interface CategoriesProps {
-  data: Category[]
+  data: Category[];
 }
 
-export const Categories = ({
-  data
-}: CategoriesProps) => {
+export const Categories = ({ data }: CategoriesProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -21,10 +21,13 @@ export const Categories = ({
   const onClick = (id: string | undefined) => {
     const query = { categoryId: id };
 
-    const url = qs.stringifyUrl({
-      url: window.location.href,
-      query
-    }, { skipNull: true });
+    const url = qs.stringifyUrl(
+      {
+        url: window.location.href,
+        query,
+      },
+      { skipNull: true }
+    );
 
     router.push(url);
   };
@@ -33,7 +36,8 @@ export const Categories = ({
     <div className="w-full overflow-x-auto space-x-2 flex p-1">
       <button
         onClick={() => onClick(undefined)}
-        className={cn(`
+        className={cn(
+          `
           flex 
           items-center 
           text-center 
@@ -48,7 +52,7 @@ export const Categories = ({
           hover:opacity-75 
           transition
         `,
-          !categoryId ? 'bg-primary/25' : 'bg-primary/10'
+          !categoryId ? "bg-primary/25" : "bg-primary/10"
         )}
       >
         Newest
@@ -56,7 +60,8 @@ export const Categories = ({
       {data.map((item) => (
         <button
           onClick={() => onClick(item.id)}
-          className={cn(`
+          className={cn(
+            `
             flex 
             items-center 
             text-center 
@@ -71,13 +76,24 @@ export const Categories = ({
             hover:opacity-75 
             transition
           `,
-            item.id === categoryId ? 'bg-primary/25' : 'bg-primary/10'
+            item.id === categoryId ? "bg-primary/25" : "bg-primary/10"
           )}
           key={item.id}
         >
           {item.name}
         </button>
       ))}
+      <Button
+        size="lg"
+        variant={"premium"}
+        onClick={() => router.push("/companion/new")}
+        style={{
+          marginLeft: "auto",
+        }}
+      >
+        <Plus className="mr-2 fill-white" size={24} />
+        Add New
+      </Button>
     </div>
-  )
-}
+  );
+};

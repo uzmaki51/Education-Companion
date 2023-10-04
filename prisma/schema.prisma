@@ -10,15 +10,15 @@ datasource db {
 }
 
 model Category {
-  id            String @id @default(uuid())
-  name          String
-  one_month     Float  @default(0.00)
-  three_month   Float  @default(0.00)
-  semi_annual   Float  @default(0.00)
-  yearly        Float  @default(0.00)
-  MLSemi_annual Float  @default(0.00)
-  MLyearly      Float  @default(0.00)
-  User          User[]
+  id           String @id @default(uuid())
+  name         String
+  oneMonth     Float  @default(0.00)
+  threeMonth   Float  @default(0.00)
+  semiAnnual   Float  @default(0.00)
+  yearly       Float  @default(0.00)
+  MLSemiAnnual Float  @default(0.00)
+  MLyearly     Float  @default(0.00)
+  User         User[]
 }
 
 enum UserRole {
@@ -27,13 +27,13 @@ enum UserRole {
 }
 
 model User {
-  id           String @id @default(uuid())
-  userId       String
-  userName     String
-  email        String
-  src          String
-  name         String @db.Text
-  role         Role
+  id       String   @id @default(uuid())
+  userId   String
+  userName String
+  email    String
+  src      String
+  name     String   @db.Text
+  role     UserRole
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -45,11 +45,6 @@ model User {
   @@fulltext([name])
 }
 
-enum Role {
-  user
-  system
-}
-
 model UserSubscription {
   id                     String    @id @default(cuid())
   userId                 String    @unique
@@ -57,4 +52,13 @@ model UserSubscription {
   stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
+}
+
+model Product {
+  id                 String  @id @default(uuid())
+  productName        String
+  productDescription String  @db.Text
+  cost               Float   @default(0.00)
+  subscription       Boolean
+  promoCode          String
 }
