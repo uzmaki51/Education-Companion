@@ -32,35 +32,35 @@ import {
 } from "@/components/ui/select";
 
 const formSchema = z.object({
-  name: z.string().min(1, {
+  productName: z.string().min(1, {
     message: "Name is required.",
   }),
-  email: z.string().min(1, {
-    message: "Email is required.",
+  productDescription: z.string().min(1, {
+    message: "Description is required.",
   }),
-  src: z.string().min(1, {
-    message: "Image is required.",
+  cost: z.number(),
+  promoCode: z.string().min(1, {
+    message: "Promotion Code is required",
   }),
-  categoryId: z.string().min(1, {
-    message: "Category is required",
-  }),
+  subscription: z.boolean(),
 });
 
 interface ProductFormProps {
-  categories: Category[];
   initialData: Product | null;
 }
 
-export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
+export const ProductForm = ({ initialData }: ProductFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: /* initialData || */ {
-      name: "",
-      email: "",
-      categoryId: undefined,
+    defaultValues: initialData || {
+      productName: "",
+      productDescription: "",
+      cost: 0,
+      promoCode: "",
+      subscription: false,
     },
   });
 
@@ -69,9 +69,9 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       if (initialData) {
-        await axios.patch(`/api/user/${initialData.id}`, values);
+        await axios.patch(`/api/product/${initialData.id}`, values);
       } else {
-        await axios.post("/api/user", values);
+        await axios.post("/api/product", values);
       }
 
       toast({
@@ -80,7 +80,7 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
       });
 
       router.refresh();
-      router.push("/");
+      router.push("/product");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -99,31 +99,16 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
         >
           <div className="space-y-2 w-full col-span-2">
             <div>
-              <h3 className="text-lg font-medium">General Information</h3>
+              <h3 className="text-lg font-medium">Product Information</h3>
               <p className="text-sm text-muted-foreground">
-                General information about your User
+                Please upload product
               </p>
             </div>
             <Separator className="bg-primary/10" />
           </div>
-          <FormField
-            name="src"
-            render={({ field }) => (
-              <FormItem className="flex flex-col items-center justify-center space-y-4 col-span-2">
-                <FormControl>
-                  <ImageUpload
-                    disabled={isLoading}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
-              name="name"
+              name="productName"
               control={form.control}
               render={({ field }) => (
                 <FormItem className="col-span-2 md:col-span-1">
@@ -131,33 +116,69 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
                   <FormControl>
                     <Input
                       disabled={isLoading}
-                      placeholder="Elon Musk"
+                      placeholder="Environment lecture"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    This is how your User will be named.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <FormField
-              name="email"
+              name="productDescription"
               control={form.control}
               render={({ field }) => (
                 <FormItem className="col-span-2 md:col-span-1">
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input
+                    <Textarea
                       disabled={isLoading}
-                      placeholder="elon.musk@gmail.com"
+                      placeholder="Please input the description of product"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    This is your new user's email address
-                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="cost"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Cost</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      disabled={isLoading}
+                      placeholder="10,000$"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="subscription"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Subscription</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="checkbox"
+                      style={{ width: '11%' }}
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -166,10 +187,10 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="categoryId"
+              name="promoCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Promotion Code</FormLabel>
                   <Select
                     disabled={isLoading}
                     onValueChange={field.onChange}
@@ -185,16 +206,20 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
+                        <SelectItem key="0" value="">
+                          Select Promotion Code
                         </SelectItem>
-                      ))}
+                        <SelectItem key="1" value="Test Promotion 1">
+                          Test Promotion 1
+                        </SelectItem>
+                        <SelectItem key="2" value="Test Promotion 2">
+                          Test Promotion 2
+                        </SelectItem>
+                        <SelectItem key="1" value="Test Promotion 3">
+                          Test Promotion 3
+                        </SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Select a category for your AI
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -203,7 +228,7 @@ export const ProductForm = ({ categories, initialData }: ProductFormProps) => {
 
           <div className="w-full flex justify-center">
             <Button size="lg" disabled={isLoading}>
-              {initialData ? "Edit your User" : "Create your User"}
+              {initialData ? "Save" : "Create Product"}
               <Wand2 className="w-4 h-4 ml-2" />
             </Button>
           </div>

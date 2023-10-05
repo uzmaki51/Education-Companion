@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { User } from "@prisma/client";
+import { User, Product} from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@nextui-org/react";
+import ConfirmImg from './../app/assets/img/confirm.png';
+import CancelImg from './../app/assets/img/cancel.png';
 
 interface ProductsProps {
-  data: User[];
+  data: Product[];
 }
 
 export const Products = ({ data }: ProductsProps) => {
@@ -42,7 +45,7 @@ export const Products = ({ data }: ProductsProps) => {
         <Button
           size="lg"
           variant={"premium"}
-          onClick={() => router.push("/companion/new")}
+          onClick={() => router.push("/product/new")}
           style={{
             marginLeft: "auto",
           }}
@@ -52,32 +55,38 @@ export const Products = ({ data }: ProductsProps) => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 pb-10">
-        {data.map((item) => (
-          <Card
-            key={item.name}
-            className="bg-primary/10 rounded-xl cursor-pointer hover:opacity-75 transition border-0"
-          >
-            <Link href={`/companion/${item.id}`}>
-              <CardHeader className="flex items-center justify-center text-center text-muted-foreground">
-                <div className="relative w-32 h-32">
+      <Table removeWrapper aria-label="Example static collection table">
+        <TableHeader>
+          <TableColumn>NO</TableColumn>
+          <TableColumn>NAME</TableColumn>
+          <TableColumn>Description</TableColumn>
+          <TableColumn>Cost</TableColumn>
+          <TableColumn style={{width: '8%', textAlign: 'center'}}>Subscription</TableColumn>
+          <TableColumn> </TableColumn>
+        </TableHeader>
+        <TableBody>
+          {data.map((item, key) => (
+            <TableRow key="1">
+              <TableCell>{key + 1}</TableCell>
+              <TableCell>{item.productName}</TableCell>
+              <TableCell>{item.productDescription}</TableCell>
+              <TableCell>{item.cost}$</TableCell>
+              <TableCell>
                   <Image
-                    src={item.src}
-                    fill
-                    className="rounded-xl object-cover"
+                    src={item.subscription ? ConfirmImg : CancelImg}
+                    className="rounded-sm object-cover mx-auto"
                     alt="Character"
+                    height={20}
                   />
-                </div>
-                <p className="font-bold">{item.name}</p>
-                <p className="text-xs">{item.description}</p>
-              </CardHeader>
-              <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
-                <p className="lowercase">@{item.userName}</p>
-              </CardFooter>
-            </Link>
-          </Card>
-        ))}
-      </div>
+              </TableCell>
+
+              <TableCell style={{textAlign: 'center'}}>
+                <Link href={`/product/${item.id}`}>Edit</Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </>
   );
 };

@@ -20,7 +20,7 @@ const ProductIdPage = async ({ params }: ProductIdPageProps) => {
     return redirectToSignIn();
   }
 
-  const companion =
+  const product =
     params.productId === "new"
       ? null
       : await prismadb.product.findUnique({
@@ -28,8 +28,6 @@ const ProductIdPage = async ({ params }: ProductIdPageProps) => {
             id: params.productId,
           },
         });
-
-  const categories = await prismadb.category.findMany();
 
   const isPro = await checkSubscription();
 
@@ -39,7 +37,7 @@ const ProductIdPage = async ({ params }: ProductIdPageProps) => {
         <Sidebar isPro={isPro} />
       </div>
       <main className="md:pl-20 pt-16 h-full">
-        <ProductForm initialData={companion} categories={categories} />
+        <ProductForm initialData={product}/>
       </main>
     </>
   );
