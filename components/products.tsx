@@ -2,15 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { User, Product} from "@prisma/client";
+import { Product } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, PenSquare } from "lucide-react";
 
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@nextui-org/react";
-import ConfirmImg from './../app/assets/img/confirm.png';
-import CancelImg from './../app/assets/img/cancel.png';
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  NextUIProvider,
+} from "@nextui-org/react";
+import ConfirmImg from "./../app/assets/img/confirm.png";
+import CancelImg from "./../app/assets/img/cancel.png";
 
 interface ProductsProps {
   data: Product[];
@@ -40,7 +47,7 @@ export const Products = ({ data }: ProductsProps) => {
   }
 
   return (
-    <>
+    <NextUIProvider>
       <div className="w-full overflow-x-auto space-x-2 flex p-1">
         <Button
           size="lg"
@@ -54,39 +61,42 @@ export const Products = ({ data }: ProductsProps) => {
           Add New
         </Button>
       </div>
-
-      <Table removeWrapper aria-label="Example static collection table">
+      <Table border={0}>
         <TableHeader>
           <TableColumn>NO</TableColumn>
           <TableColumn>NAME</TableColumn>
           <TableColumn>Description</TableColumn>
           <TableColumn>Cost</TableColumn>
-          <TableColumn style={{width: '8%', textAlign: 'center'}}>Subscription</TableColumn>
+          <TableColumn style={{ width: "8%", textAlign: "center" }}>
+            Subscription
+          </TableColumn>
           <TableColumn> </TableColumn>
         </TableHeader>
         <TableBody>
           {data.map((item, key) => (
-            <TableRow key="1">
+            <TableRow key={`row_${key}`}>
               <TableCell>{key + 1}</TableCell>
               <TableCell>{item.productName}</TableCell>
               <TableCell>{item.productDescription}</TableCell>
               <TableCell>{item.cost}$</TableCell>
               <TableCell>
-                  <Image
-                    src={item.subscription ? ConfirmImg : CancelImg}
-                    className="rounded-sm object-cover mx-auto"
-                    alt="Character"
-                    height={20}
-                  />
+                <Image
+                  src={item.subscription ? ConfirmImg : CancelImg}
+                  className="rounded-sm object-cover mx-auto"
+                  alt="Character"
+                  height={20}
+                />
               </TableCell>
 
-              <TableCell style={{textAlign: 'center'}}>
-                <Link href={`/product/${item.id}`}>Edit</Link>
+              <TableCell style={{ textAlign: "center" }}>
+                <Link href={`/product/${item.id}`}>
+                  <PenSquare />
+                </Link>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-    </>
+    </NextUIProvider>
   );
 };
