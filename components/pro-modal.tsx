@@ -11,21 +11,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useProModal } from "@/hooks/use-pro-modal";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
+import { Product } from "@prisma/client";
+interface PaymentProps {
+  onOpen: boolean,
+  product: Product
+}
 
-export const ProModal = () => {
-  const proModal = useProModal();
+export const ProModal = ({ onOpen, product }: PaymentProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // console.log(isOpen)
+  // if(onOpen) {
+  //   // setIsOpen(true);
+  //   setIsOpen(true);
+  // }
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
 
   const onSubscribe = async () => {
     try {
@@ -47,16 +54,22 @@ export const ProModal = () => {
     return null;
   }
 
+  const a = () => {
+    onOpen = false;
+    
+    // setOpen(false);
+  }
+
   return (
-    <Dialog open={proModal.isOpen} onOpenChange={proModal.onClose}>
+    <Dialog open={onOpen} onOpenChange={() => a()}>
       <DialogContent>
         <DialogHeader className="space-y-4">
           <DialogTitle className="text-center">
-            Upgrade to Pro
+            Subscription
           </DialogTitle>
           <DialogDescription className="text-center space-y-2">
             Create
-            <span className="text-sky-500 mx-1 font-medium">Custom AI</span>
+            <span className="text-sky-500 mx-1 font-medium">{}</span>
             Companions!
           </DialogDescription>
         </DialogHeader>

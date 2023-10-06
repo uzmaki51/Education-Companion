@@ -52,7 +52,6 @@ interface ProductFormProps {
 export const ProductForm = ({ initialData }: ProductFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
-  console.log(initialData);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
