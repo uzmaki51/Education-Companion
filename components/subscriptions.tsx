@@ -48,24 +48,28 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
   });
 
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
-  const [subscriptionTypeValue, setSubscriptionTypeValue] = useState(category.oneMonth.toString());
+  const [subscriptionTypeValue, setSubscriptionTypeValue] = useState("oneMonth");
   const [subscriptionTypeLabel, setSubscriptionTypeLabel] = useState(category.oneMonth.toString());
   const [customSubscription, setcustomSubscription] = useState(false);
   const [isProductPurchase, setIsProductPurchase] = useState(true);
   const [purchaseTotalAmount, setPurchaseTotalAmount] = useState(0);
+  const [subscriptionParams, setSubscriptionParams] = useState("&params=" + category.oneMonth.toString() + "_oneMonth")
   var productSelected = false;
 
   const subscriptionProduct = (product: Product) =>  {
     setProduct(product)
     onOpen();
     setIsProductPurchase(false);
+
+    apiParams = [product.id];
+    
   }
 
-  const onClick = async () => {
+  const onClick = async (type: string) => {
     try {
       setLoading(true);
 
-      const response = await axios.get("/api/stripe?productIds=" + JSON.stringify(apiParams));
+      const response = await axios.get("/api/stripe?type=" + type + "&productIds=" + JSON.stringify(apiParams) + subscriptionParams);
 
       window.location.href = response.data.url;
     } catch (error) {
@@ -83,14 +87,15 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
     if(value == "custom") {
       setcustomSubscription(true);
       setSubscriptionTypeLabel(category.oneMonth.toString());
+      setSubscriptionParams("&params=" + category.oneMonth.toString() + "_" + value);
     } else {
       setcustomSubscription(false);
-      setSubscriptionTypeLabel(value);
+      setSubscriptionTypeLabel(category[value].toString());
+      setSubscriptionParams("&params=" + category[value].toString() + "_" + value)
     }
   }
 
   const changeSubscriptionMonth = (value: string) => {
-    console.log(value);
     setSubscriptionTypeLabel((category.oneMonth * parseFloat(value)).toString());
   }
 
@@ -120,6 +125,8 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
         apiParams.push(productInfo.id);
       }
     }
+
+    setSubscriptionParams("")
 
     setPurchaseTotalAmount(parseFloat(purchaseTotalAmount) + plusAmount);
   }
@@ -168,14 +175,14 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
               </Table>
 
               <p className="text-2xl font-medium">
-                Total Purchase Amount: {purchaseTotalAmount}<span className="text-sm font-normal">$</span>
+                Total Amount: {purchaseTotalAmount}<span className="text-sm font-normal">$</span>
               </p>
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="flat" onPress={onClose}>
                   Close
                 </Button>
-                <Button color="success" variant="solid" onClick={onClick}>
+                <Button color="success" variant="solid" onClick={() => onClick("purchase")}>
                   <ShoppingCart className="w-4 h-4 ml-2" />
                   Purchase
                 </Button>
@@ -199,12 +206,12 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
                   value={subscriptionTypeValue}
                   onValueChange={ changeSubscriptionType }
                 >
-                  <Radio value={category.oneMonth.toString()}>One Month</Radio>
-                  <Radio value={category.threeMonth.toString()}>Three Months</Radio>
-                  <Radio value={category.semiAnnual.toString()}>Semi Annual</Radio>
-                  <Radio value={category.yearly.toString()}>Yearly</Radio>
-                  <Radio value={category.MLSemiAnnual.toString()}>ML Semi Annual</Radio>
-                  <Radio value={category.MLyearly.toString()}>ML Yearly</Radio>
+                  <Radio value={"oneMonth"}>One Month</Radio>
+                  <Radio value={"threeMonth"}>Three Months</Radio>
+                  <Radio value={"semiAnnual"}>Semi Annual</Radio>
+                  <Radio value={"yearly"}>Yearly</Radio>
+                  <Radio value={"MLSemiAnnual"}>ML Semi Annual</Radio>
+                  <Radio value={"MLyearly"}>ML Yearly</Radio>
                   <Radio value="custom">Custom</Radio>
                 </RadioGroup>
                 {product.subscription == true && customSubscription &&
@@ -227,7 +234,7 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
                 <Button color="danger" variant="flat" onPress={onClose}>
                   Close
                 </Button>
-                <Button color="success" variant="solid" onClick={onClick}>
+                <Button color="success" variant="solid" onClick={() => onClick("subscription")}>
                   <Sparkles className="w-4 h-4 ml-2" />
                   Subscribe
                 </Button>
@@ -254,9 +261,10 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
       </>
       ) : (
         <>
-        <div className="w-full overflow-x-auto space-x-2 flex p-1">
+        <div className="w-full overflow-x-auto ml-auto space-x-2 flex p-1">
         <Button
             onPress={() => openProductModal() }
+            className="ml-auto mb-2"
           >
             <Plus className="mr-2 fill-white" size={24} />
               Buy New
@@ -279,7 +287,7 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
               <TableCell>{key + 1}</TableCell>
               <TableCell>{item.product.productName}</TableCell>
               <TableCell>${item.product.cost}</TableCell>
-              <TableCell>{item.stripeCurrentPeriodEnd.toDateString()}</TableCell>
+              <TableCell>{!item.product.subscription ? "" : item.stripeCurrentPeriodEnd.toDateString()}</TableCell>
               <TableCell>
                 <Image
                   src={item.product.subscription ? ConfirmImg : CancelImg}
@@ -290,7 +298,7 @@ export const Subscriptions = ({ subscription, user, productList, category }: Pro
               </TableCell>
               <TableCell style={{ textAlign: "center" }}>
                 {item.product.subscription && 
-                  <Button  onPress={() => subscriptionProduct(item.product)} color="primary">
+                  <Button color="primary" variant="light" size="sm" onPress={() => subscriptionProduct(item.product)}>
                     <Plus />
                   </Button>
                 }

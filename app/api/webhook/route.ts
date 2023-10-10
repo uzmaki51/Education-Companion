@@ -1,7 +1,6 @@
 import Stripe from "stripe"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs";
 
 import prismadb from "@/lib/prismadb"
 import { stripe } from "@/lib/stripe"
@@ -12,7 +11,6 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event
 
-  console.log(body);
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -24,14 +22,20 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session
-
-  const { userId } = auth();
-  const user = await currentUser();
+  var userId = "";
 
   if (event.type === "checkout.session.completed") {
-    if (!session?.metadata?.userId) {
+    let parsedBody = JSON.parse(body)
+    console.log(parsedBody.data)
+    userId = parsedBody.data.object.metadata.userId;
+  // }
+
+  // if (event.type === "payment_intent.created") {
+    if (!userId) {
       return new NextResponse("User id is required", { status: 400 });
     }
+
+    console.log("webhook callback User Id------------------", userId);
 
     await prismadb.userSubscription.updateMany({
       where: {
@@ -44,23 +48,23 @@ export async function POST(req: Request) {
     })
   }
 
-  if (event.type === "invoice.payment_succeeded") {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
+  // if (event.type === "invoice.payment_succeeded") {
+  //   const subscription = await stripe.subscriptions.retrieve(
+  //     session.subscription as string
+  //   )
 
-    await prismadb.userSubscription.update({
-      where: {
-        stripeSubscriptionId: subscription.id,
-      },
-      data: {
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
-      },
-    })
-  }
+  //   await prismadb.userSubscription.update({
+  //     where: {
+  //       stripeSubscriptionId: subscription.id,
+  //     },
+  //     data: {
+  //       stripePriceId: subscription.items.data[0].price.id,
+  //       stripeCurrentPeriodEnd: new Date(
+  //         subscription.current_period_end * 1000
+  //       ),
+  //     },
+  //   })
+  // }
 
   return new NextResponse(null, { status: 200 })
 };

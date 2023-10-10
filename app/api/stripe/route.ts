@@ -19,43 +19,93 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    var totalAmount = 0;
+    var insertData: any[] = [];
+
     const productIdsTmp = body.get("productIds");
     const productIds:string[] = JSON.parse(productIdsTmp);
+    const type = body.get("type");
 
-    var totalAmount = 0;
-
-    let productList = await prismadb.product.findMany({
-      where: {
-        id: {
-          in: productIds
+    if(type == "subscription") {
+      const params = body.get("params");
+      const price = params.split("_")[0];
+      const period = params.split("_")[1];
+      totalAmount = price;
+      let timePeriod = 1;
+        switch(period) {
+          case "oneMonth":
+            timePeriod = 1;
+          break;
+          case "threeMonth":
+            timePeriod = 3;
+          break;
+          case "semiAnnual":
+            timePeriod = 6;
+          break;
+          case "yearly":
+            timePeriod = 12;
+          break;
+          case "MLSemiAnnual":
+            timePeriod = 6;
+            break;
+          case "MLyearly":
+            timePeriod = 12;
+            break;
+          default:
+            timePeriod = period;
+            totalAmount = period * price;
+            break;
         }
+          
+        var nowTime = new Date();
+        var periodTime  = nowTime.setMonth(nowTime.getMonth()+timePeriod);
+
+        insertData = [{
+          userId: userId,
+          productId: productIds[0],
+          stripeSubscriptionId: "",
+          stripeCustomerId: "",
+          stripePriceId: "",
+          stripeCurrentPeriodEnd: new Date(periodTime),
+        }]
+
+      } else {
+        let productList = await prismadb.product.findMany({
+          where: {
+            id: {
+              in: productIds
+            }
+          }
+        })
+    
+        productList.map((item, key) => {
+          totalAmount += item.cost;
+          insertData.push({
+            userId: userId,
+            productId: item.id,
+            stripeSubscriptionId: "",
+            stripeCustomerId: "",
+            stripePriceId: "",
+            stripeCurrentPeriodEnd: new Date(),
+          })
+        })
+      }
+
+    await prismadb.userSubscription.deleteMany({
+      where: {
+        userId: userId,
+        purchaseStatus: 0
       }
     })
-
-    var insertData: any[] = [];
-    productList.map((item, key) => {
-      totalAmount += item.cost;
-      insertData.push({
-        userId: userId,
-        productId: item.id,
-        stripeSubscriptionId: "",
-        stripeCustomerId: "",
-        stripePriceId: "",
-        stripeCurrentPeriodEnd: new Date(
-          1699544776 * 1000 
-        ),
-      })
-    })
-
     await prismadb.userSubscription.createMany({
       data: insertData
     })
 
-    const userSubscription = await prismadb.userSubscription.findUnique({
-      where: {
-        userId
-      }
-    })
+    // const userSubscription = await prismadb.userSubscription.findUnique({
+    //   where: {
+    //     userId
+    //   }
+    // })
 
     // if (userSubscription && userSubscription.stripeCustomerId) {
     //   const stripeSession = await stripe.billingPortal.sessions.create({
