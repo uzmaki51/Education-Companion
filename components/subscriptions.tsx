@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import axios from "axios";
-import { Category, Product, User } from "@prisma/client";
+import { Category, Product, User, UserSubscription } from "@prisma/client";
 import { Plus, PenSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Checkbox, Input, Link} from "@nextui-org/react";
-import { Sparkles } from "lucide-react";
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Checkbox, Input, Link, RadioGroup, Radio} from "@nextui-org/react";
+import { Sparkles, ShoppingCart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useRouter } from "next/navigation";
@@ -21,13 +21,19 @@ import {
 } from "@nextui-org/react";
 import { ProModal } from "./pro-modal";
 
+import ConfirmImg from "./../app/assets/img/confirm.png";
+import CancelImg from "./../app/assets/img/cancel.png";
+
 interface ProductsProps {
-  subscription: Product[],
-  user: User
+  subscription: UserSubscription[],
+  user: User,
+  category: Category,
+  productList: Product[]
 }
+var apiParams:any = [];
+// localStorage.clear();
 
-
-export const Subscriptions = ({ subscription, user }: Product) => { 
+export const Subscriptions = ({ subscription, user, productList, category }: ProductsProps) => { 
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -42,17 +48,24 @@ export const Subscriptions = ({ subscription, user }: Product) => {
   });
 
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
+  const [subscriptionTypeValue, setSubscriptionTypeValue] = useState(category.oneMonth.toString());
+  const [subscriptionTypeLabel, setSubscriptionTypeLabel] = useState(category.oneMonth.toString());
+  const [customSubscription, setcustomSubscription] = useState(false);
+  const [isProductPurchase, setIsProductPurchase] = useState(true);
+  const [purchaseTotalAmount, setPurchaseTotalAmount] = useState(0);
+  var productSelected = false;
 
   const subscriptionProduct = (product: Product) =>  {
     setProduct(product)
     onOpen();
+    setIsProductPurchase(false);
   }
 
   const onClick = async () => {
     try {
       setLoading(true);
 
-      const response = await axios.get("/api/stripe");
+      const response = await axios.get("/api/stripe?productIds=" + JSON.stringify(apiParams));
 
       window.location.href = response.data.url;
     } catch (error) {
@@ -65,51 +78,110 @@ export const Subscriptions = ({ subscription, user }: Product) => {
     }
   };
 
-  if (subscription.length === 0) {
-    return (
-      <>
-        <div className="pt-10 flex flex-col items-center justify-center space-y-3">
-          <div className="relative w-60 h-60">
-            <Image fill className="grayscale" src="/empty.png" alt="Empty" />
-          </div>
-          <p className="text-sm text-muted-foreground">No products found.</p>
-          <Button
-            size="lg"
-            variant={"solid"}
-            onClick={() => router.push("/product/new")}
-          >
-            <Plus className="mr-2 fill-white" size={24} />
-            Buy New
-          </Button>
-        </div>
-      </>
-    );
+  const changeSubscriptionType = (value: string) => {
+    setSubscriptionTypeValue(value);
+    if(value == "custom") {
+      setcustomSubscription(true);
+      setSubscriptionTypeLabel(category.oneMonth.toString());
+    } else {
+      setcustomSubscription(false);
+      setSubscriptionTypeLabel(value);
+    }
   }
 
+  const changeSubscriptionMonth = (value: string) => {
+    console.log(value);
+    setSubscriptionTypeLabel((category.oneMonth * parseFloat(value)).toString());
+  }
+
+  const openProductModal = () => {
+    setIsProductPurchase(true);
+    setPurchaseTotalAmount(0);
+    onOpen();
+  }
+
+  const selectedProduct = (isSelected: any) => {
+    productSelected = isSelected;
+    console.log(productSelected);
+  }
+
+  const getProductInfoFromId = (id: string, isSelected: boolean) => {
+    return productList.find((item => item.id == id));
+  }
+
+  const productChanged = (productId:any) => {
+    let productInfo = getProductInfoFromId(productId, !productSelected);
+    let plusAmount = parseFloat(productInfo.cost);
+    if(!productSelected) {
+      plusAmount *= -1;
+      apiParams.splice(apiParams.indexOf(productInfo.id), 1)
+    } else {
+      if(apiParams.indexOf(productInfo.id) == -1) {
+        apiParams.push(productInfo.id);
+      }
+    }
+
+    setPurchaseTotalAmount(parseFloat(purchaseTotalAmount) + plusAmount);
+  }
   return (
     <NextUIProvider>
-      <div className="w-full overflow-x-auto space-x-2 flex p-1">
-        <Button
-          size="lg"
-          variant={"solid"}
-          style={{
-            margin: "auto",
-          }}
-          // onClick={() => openProModal()}
-           color="primary"
-        >
-          <Plus className="mr-2 fill-white" size={24} />
-          Buy New
-        </Button>
-      </div>
-
       <Modal 
         isOpen={isOpen} 
         onOpenChange={onOpenChange}
         placement="top-center"
+        size={"xl"} 
       >
         <ModalContent>
           {(onClose) => (
+            isProductPurchase ? (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Purchase
+              </ModalHeader>
+              <ModalBody>
+              <Table border={0}>
+                <TableHeader>
+                  <TableColumn>NO</TableColumn>
+                  <TableColumn>NAME</TableColumn>
+                  <TableColumn>Cost</TableColumn>
+                  <TableColumn style={{ width: "8%", textAlign: "center" }}>
+                    Subscription
+                  </TableColumn>
+                  <TableColumn> </TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {productList.map((item, key) => (
+                    <TableRow key={`row_${key}`}>
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell>{item.productName}</TableCell>
+                      <TableCell>{item.cost}$</TableCell>
+                      <TableCell>
+                        {item.subscription ? "Yes" : "No"}
+                      </TableCell>
+
+                      <TableCell style={{ textAlign: "center" }}>
+                        <Checkbox radius="none" value={item.cost.toString()} onChange={() => productChanged(item.id)} onValueChange={selectedProduct}></Checkbox>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <p className="text-2xl font-medium">
+                Total Purchase Amount: {purchaseTotalAmount}<span className="text-sm font-normal">$</span>
+              </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="flat" onPress={onClose}>
+                  Close
+                </Button>
+                <Button color="success" variant="solid" onClick={onClick}>
+                  <ShoppingCart className="w-4 h-4 ml-2" />
+                  Purchase
+                </Button>
+              </ModalFooter>
+            </>
+            ) : (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 Subscription
@@ -118,58 +190,117 @@ export const Subscriptions = ({ subscription, user }: Product) => {
                 <div className="flex justify-between">
                   <span className="text-2xl text-sky-500 font-medium">{product.productName}</span>
                   <p className="text-2xl font-medium">
-                    ${product.cost}<span className="text-sm font-normal">{product.subscription ? " / mo" : ""}</span>
+                    ${subscriptionTypeLabel}<span className="text-sm font-normal"></span>
                   </p>
                 </div>
-                {product.subscription == true &&
+                <RadioGroup
+                  label="Select subscription type"
+                  orientation="vertical"
+                  value={subscriptionTypeValue}
+                  onValueChange={ changeSubscriptionType }
+                >
+                  <Radio value={category.oneMonth.toString()}>One Month</Radio>
+                  <Radio value={category.threeMonth.toString()}>Three Months</Radio>
+                  <Radio value={category.semiAnnual.toString()}>Semi Annual</Radio>
+                  <Radio value={category.yearly.toString()}>Yearly</Radio>
+                  <Radio value={category.MLSemiAnnual.toString()}>ML Semi Annual</Radio>
+                  <Radio value={category.MLyearly.toString()}>ML Yearly</Radio>
+                  <Radio value="custom">Custom</Radio>
+                </RadioGroup>
+                {product.subscription == true && customSubscription &&
                   <Input
-                    autoFocus
-                    label="Months"
-                    placeholder="Enter subscription months"
-                    variant="bordered"
                     type="number"
+                    label="Months"
+                    placeholder="1"
+                    labelPlacement="outside"
+                    onValueChange={changeSubscriptionMonth}
+                    endContent={
+                      <div className="pointer-events-none flex items-center">
+                        <span className="text-default-400 text-small">Month</span>
+                      </div>
+                    }
                   />
                 }
-
+            
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="flat" onPress={onClose}>
                   Close
                 </Button>
                 <Button color="success" variant="solid" onClick={onClick}>
-                  <Sparkles className="w-4 h-4 ml-2 fill-white" />
+                  <Sparkles className="w-4 h-4 ml-2" />
                   Subscribe
                 </Button>
               </ModalFooter>
             </>
+            )
           )}
         </ModalContent>
       </Modal>
-
+      {subscription.length == 0 ? (
+        <>
+        <div className="pt-10 flex flex-col items-center justify-center space-y-3">
+          <div className="relative w-60 h-60">
+            <Image fill className="grayscale" src="/empty.png" alt="Empty" />
+          </div>
+          <p className="text-sm text-muted-foreground">No products found.</p>
+          <Button
+            onPress={() => openProductModal() }
+          >
+            <Plus className="mr-2" size={24} />
+              Buy New
+          </Button>
+        </div>
+      </>
+      ) : (
+        <>
+        <div className="w-full overflow-x-auto space-x-2 flex p-1">
+        <Button
+            onPress={() => openProductModal() }
+          >
+            <Plus className="mr-2 fill-white" size={24} />
+              Buy New
+        </Button>
+      </div>
       <Table border={0}>
         <TableHeader>
           <TableColumn>No</TableColumn>
           <TableColumn>Product</TableColumn>
           <TableColumn>Cost</TableColumn>
           <TableColumn>Expire Date</TableColumn>
+          <TableColumn style={{ width: "8%", textAlign: "center" }}>
+            Subscription
+          </TableColumn>
           <TableColumn> </TableColumn>
         </TableHeader>
         <TableBody>
-          {initialData.subscription.map((item:any, key:number) => (
+          {subscription.map((item:any, key:number) => (
             <TableRow key={`row_${key}`}>
               <TableCell>{key + 1}</TableCell>
               <TableCell>{item.product.productName}</TableCell>
-              <TableCell>{item.product.cost}</TableCell>
+              <TableCell>${item.product.cost}</TableCell>
               <TableCell>{item.stripeCurrentPeriodEnd.toDateString()}</TableCell>
+              <TableCell>
+                <Image
+                  src={item.product.subscription ? ConfirmImg : CancelImg}
+                  className="rounded-sm object-cover mx-auto"
+                  alt="Character"
+                  height={20}
+                />
+              </TableCell>
               <TableCell style={{ textAlign: "center" }}>
-                <Button  onPress={() => subscriptionProduct(item.product)} color="primary">
-                  <Plus />
-                </Button>
+                {item.product.subscription && 
+                  <Button  onPress={() => subscriptionProduct(item.product)} color="primary">
+                    <Plus />
+                  </Button>
+                }
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      </>
+      )} 
     </NextUIProvider>
   );
 };

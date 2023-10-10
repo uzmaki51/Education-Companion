@@ -1,6 +1,7 @@
 import Stripe from "stripe"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
+import { auth, currentUser } from "@clerk/nextjs";
 
 import prismadb from "@/lib/prismadb"
 import { stripe } from "@/lib/stripe"
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event
 
+  console.log(body);
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -23,24 +25,21 @@ export async function POST(req: Request) {
 
   const session = event.data.object as Stripe.Checkout.Session
 
-  if (event.type === "checkout.session.completed") {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
+  const { userId } = auth();
+  const user = await currentUser();
 
+  if (event.type === "checkout.session.completed") {
     if (!session?.metadata?.userId) {
       return new NextResponse("User id is required", { status: 400 });
     }
 
-    await prismadb.userSubscription.create({
+    await prismadb.userSubscription.updateMany({
+      where: {
+        userId: userId,
+        purchaseStatus: 0
+      },
       data: {
-        userId: session?.metadata?.userId,
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer as string,
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
+        purchaseStatus: 1
       },
     })
   }
