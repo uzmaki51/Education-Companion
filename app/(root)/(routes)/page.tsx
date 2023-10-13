@@ -23,6 +23,7 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
         email: user?.emailAddresses[0].emailAddress,
       },
     }));
+
   const data = await prismadb.user.findMany({
     where: {
       categoryId: searchParams.categoryId,
@@ -33,7 +34,8 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
     },
   });
 
-  if (userData && userData.role === "user") redirect("/payments");
+  if (!userData) redirect("/notFound");
+  if (userData.role === "user") redirect("/payments");
 
   const categories = await prismadb.category.findMany();
 

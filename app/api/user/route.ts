@@ -48,6 +48,16 @@ export async function POST(req: Request) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
+    const existUsers = await prismadb.user.findFirst({
+      select: {
+        email,
+      },
+    });
+
+    if (existUsers) {
+      return new NextResponse("Already Exists", { status: 401 });
+    }
+
     const result = await clerkClient.users.createUser({
       emailAddress: [email],
       password: "Root123!@#",
