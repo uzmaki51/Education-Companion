@@ -27,31 +27,42 @@ enum UserRole {
 }
 
 model User {
-  id       String   @id @default(uuid())
-  userId   String
-  userName String
-  email    String
-  src      String
-  name     String   @db.Text
-  role     UserRole
+  id               String   @id @default(uuid())
+  userId           String
+  userName         String
+  email            String
+  src              String
+  name             String   @db.Text
+  role             UserRole
+  account          String   @default("")
+  license          String   @default("")
+  ticket           String   @default("")
+  NFTDiscount      String   @default("")
+  ReferralDiscount String   @default("")
+  experienced      Boolean?
+  isML             Boolean  @default(false)
+  broker           String   @default("")
+  comment          String   @default("") @db.Text
+  paymentTxHash    String   @default("")
+  channelId        String   @default("")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
+  categoryId String   @default("")
 
-  UserSubscription   UserSubscription[]
+  UserSubscription UserSubscription[]
 
   @@index([categoryId])
   @@fulltext([name])
 }
 
 model Product {
-  id                 String  @id @default(uuid())
+  id                 String             @id @default(uuid())
   productName        String
-  productDescription String  @db.Text
-  cost               Float   @default(0.00)
+  productDescription String             @db.Text
+  cost               Float              @default(0.00)
   subscription       Boolean
   promoCode          String
   UserSubscription   UserSubscription[]
@@ -60,11 +71,11 @@ model Product {
 model UserSubscription {
   id                     String    @id @default(cuid())
   user                   User      @relation(fields: [userId], references: [id])
-  userId                 String    
+  userId                 String
   product                Product   @relation(fields: [productId], references: [id])
-  productId              String    
-  stripeCustomerId       String?   
-  stripeSubscriptionId   String?   
+  productId              String
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
   stripePriceId          String?   @map(name: "stripe_price_id")
   purchaseStatus         Int?      @default(0)
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")

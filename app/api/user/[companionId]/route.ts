@@ -11,7 +11,22 @@ export async function PATCH(
   try {
     const body = await req.json();
     const user = await currentUser();
-    const { src, name, description, instructions, seed, categoryId } = body;
+    const {
+      src,
+      name,
+      email,
+      categoryId,
+      account,
+      license,
+      ticket,
+      NFTDiscount,
+      ReferralDiscount,
+      broker,
+      comment,
+      channelId,
+      isML,
+      experienced,
+    } = body;
 
     if (!params.companionId) {
       return new NextResponse("Companion ID required", { status: 400 });
@@ -21,22 +36,9 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (
-      !src ||
-      !name ||
-      !description ||
-      !instructions ||
-      !seed ||
-      !categoryId
-    ) {
+    if (!src || !name || !categoryId || !email) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
-
-    // const isPro = await checkSubscription();
-
-    // if (!isPro) {
-    //   return new NextResponse("Pro subscription required", { status: 403 });
-    // }
 
     const companion = await prismadb.user.update({
       where: {
@@ -49,9 +51,16 @@ export async function PATCH(
         userName: user.firstName,
         src,
         name,
-        description,
-        instructions,
-        seed,
+        account,
+        license,
+        ticket,
+        NFTDiscount,
+        ReferralDiscount,
+        broker,
+        comment,
+        channelId,
+        isML,
+        experienced,
       },
     });
 

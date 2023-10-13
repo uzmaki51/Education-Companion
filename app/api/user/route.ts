@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 
 import prismadb from "@/lib/prismadb";
@@ -23,7 +23,22 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const user = await currentUser();
-    const { src, name, categoryId, email } = body;
+    const {
+      src,
+      name,
+      categoryId,
+      email,
+      account,
+      license,
+      ticket,
+      NFTDiscount,
+      ReferralDiscount,
+      broker,
+      comment,
+      channelId,
+      isML,
+      experienced,
+    } = body;
 
     if (!user || !user.id || !user.firstName) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -33,11 +48,12 @@ export async function POST(req: Request) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
-    const isPro = await checkSubscription();
-
-    // if (!isPro) {
-    //   return new NextResponse("Pro subscription required", { status: 403 });
-    // }
+    const result = await clerkClient.users.createUser({
+      emailAddress: [email],
+      password: "Root123!@#",
+      username: name,
+    });
+    console.log(result);
 
     const companion = await prismadb.user.create({
       data: {
@@ -48,6 +64,16 @@ export async function POST(req: Request) {
         src,
         name,
         role: "user",
+        account,
+        license,
+        ticket,
+        NFTDiscount,
+        ReferralDiscount,
+        broker,
+        comment,
+        channelId,
+        isML,
+        experienced,
       },
     });
 

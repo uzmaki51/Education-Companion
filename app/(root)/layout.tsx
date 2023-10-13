@@ -5,7 +5,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   const isPro = await checkSubscription();
 
   return (
-    <div className="h-full">
+    <div className="mh-full">
       <Navbar isPro={isPro} />
       {children}
     </div>

@@ -30,6 +30,8 @@ import {
   SelectValue,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Modal, Switch } from "@nextui-org/react";
+import { RedirectToSignUp, useSignUp } from "@clerk/nextjs";
 
 const formSchema = z.object({
   name: z.string().min(1, {
@@ -44,6 +46,16 @@ const formSchema = z.object({
   categoryId: z.string().min(1, {
     message: "Category is required",
   }),
+  account: z.string().default(""),
+  license: z.string().default(""),
+  ticket: z.string().default(""),
+  NFTDiscount: z.string().default(""),
+  ReferralDiscount: z.string().default(""),
+  broker: z.string().default(""),
+  comment: z.string().default(""),
+  channelId: z.string().default(""),
+  isML: z.boolean().default(false),
+  experienced: z.boolean().nullable().default(null),
 });
 
 interface CompanionFormProps {
@@ -57,6 +69,7 @@ export const CompanionForm = ({
 }: CompanionFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
+  const { signUp } = useSignUp();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -203,7 +216,184 @@ export const CompanionForm = ({
               )}
             />
           </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="account"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Account ID</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="channelId"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Channel ID</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="license"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>License</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="ticket"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Ticket Count</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="NFTDiscount"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>NFT Discount</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="ReferralDiscount"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Referral Discount</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="broker"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-1">
+                  <FormLabel>Broker</FormLabel>
+                  <FormControl>
+                    <Input disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="comment"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="col-span-2 md:col-span-2">
+                  <FormLabel>Comment / Details</FormLabel>
+                  <FormControl>
+                    <Textarea disabled={isLoading} placeholder="" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="isML"
+              control={form.control}
+              render={({ field }) => {
+                return (
+                  <FormItem
+                    className="col-span-2 md:col-span-1"
+                    style={{
+                      alignItems: "center",
+                      display: "flex",
+                    }}
+                  >
+                    <FormLabel>Is ML User</FormLabel>
+                    <FormControl
+                      style={{
+                        marginTop: 0,
+                        marginLeft: 30,
+                      }}
+                    >
+                      <Switch
+                        color="success"
+                        style={{ width: "11%" }}
+                        {...field}
+                        isSelected={field.value}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              name="experienced"
+              control={form.control}
+              render={({ field }) => {
+                return (
+                  <FormItem
+                    className="col-span-2 md:col-span-1"
+                    style={{
+                      alignItems: "center",
+                      display: "flex",
+                    }}
+                  >
+                    <FormLabel>Experienced</FormLabel>
+                    <FormControl
+                      style={{
+                        marginTop: 0,
+                        marginLeft: 30,
+                      }}
+                    >
+                      <Switch
+                        color="success"
+                        style={{ width: "11%" }}
+                        {...field}
+                        isSelected={field.value}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </div>
           <div className="w-full flex justify-center">
             <Button size="lg" disabled={isLoading}>
               {initialData ? "Edit your User" : "Create your User"}

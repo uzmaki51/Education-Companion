@@ -169,7 +169,6 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
                 name="subscription"
                 control={form.control}
                 render={({ field }) => {
-                  console.log(field);
                   return (
                     <FormItem
                       className="col-span-2 md:col-span-1"
