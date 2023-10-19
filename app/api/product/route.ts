@@ -19,7 +19,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const user = await currentUser();
-    const { productName, productDescription, cost, promoCode, subscription } = body;
+    const { productName, productDescription, cost, promoCode, subscription } =
+      body;
 
     if (!user || !user.id || !user.firstName) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
         productDescription: productDescription,
         cost: parseFloat(cost),
         subscription: insert_subscription,
-        promoCode: promoCode
+        promoCode: parseInt(promoCode),
       },
     });
 

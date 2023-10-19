@@ -18,16 +18,17 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
   const userData =
     user &&
     (await prismadb.user.findFirst({
-        include: {
-          category: true
-        },
-        where: {
-          email: user?.emailAddresses[0].emailAddress,
-      }}));
+      include: {
+        category: true,
+      },
+      where: {
+        email: user?.emailAddresses[0].emailAddress,
+      },
+    }));
 
   const userSubscription = await prismadb.userSubscription.findMany({
     include: {
-      product: true
+      product: true,
     },
     where: {
       AND: [
@@ -35,23 +36,28 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
           userId: user?.id,
         },
         {
-          purchaseStatus: 1
-          
-        }
-      ]
-    }
+          purchaseStatus: 1,
+        },
+      ],
+    },
   });
 
-  console.log(userData?.category);
-
-
-  const product = await prismadb.product.findMany();
+  const product = await prismadb.product.findMany({
+    include: {
+      promotion: true,
+    },
+  });
 
   return (
     <>
       <main className="pt-16 h-full">
         <div className="h-full p-4 space-y-2">
-          <Subscriptions subscription={userSubscription} user={userData} productList={product} category={userData?.category} />
+          <Subscriptions
+            subscription={userSubscription}
+            user={userData}
+            productList={product}
+            category={userData?.category}
+          />
         </div>
       </main>
     </>

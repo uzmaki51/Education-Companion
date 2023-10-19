@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Wand2 } from "lucide-react";
-import { Product } from "@prisma/client";
+import { Product, Promotion } from "@prisma/client";
 
 import { NextUIProvider } from "@nextui-org/react";
 import {
@@ -30,6 +30,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Switch } from "@nextui-org/react";
+import { useEffect, useState } from "react";
 
 const formSchema = z.object({
   productName: z.string().min(1, {
@@ -52,6 +53,7 @@ interface ProductFormProps {
 export const ProductForm = ({ initialData }: ProductFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
+  const [promoData, setPromoData] = useState<Promotion[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -62,6 +64,15 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
       subscription: false,
     },
   });
+
+  const getPromotions = async () => {
+    const res = await axios.get("/api/promotion");
+    setPromoData(res.data);
+  };
+
+  useEffect(() => {
+    getPromotions();
+  }, []);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -219,18 +230,14 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem key="promo_0" value="">
-                          Select Promotion Code
-                        </SelectItem>
-                        <SelectItem key="promo_01" value="Test Promotion 1">
-                          Test Promotion 1
-                        </SelectItem>
-                        <SelectItem key="promo_02" value="Test Promotion 2">
-                          Test Promotion 2
-                        </SelectItem>
-                        <SelectItem key="promo_03" value="Test Promotion 3">
-                          Test Promotion 3
-                        </SelectItem>
+                        {promoData.map((item, index) => (
+                          <SelectItem
+                            key={`promo_${index}`}
+                            value={item.id.toString()}
+                          >
+                            {item.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

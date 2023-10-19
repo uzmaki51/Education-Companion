@@ -98,3 +98,13 @@ table th {
 .mhv-full {
   min-height: 100vh;
 }
+
+.row {
+  display: flex;
+}
+
+.old-data {
+  color: gray;
+  text-decoration: line-through;
+  margin-right: 10px;
+}

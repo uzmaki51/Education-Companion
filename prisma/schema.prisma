@@ -58,13 +58,22 @@ model User {
   @@fulltext([name])
 }
 
+model Promotion {
+  id        Int    @id @default(autoincrement())
+  name      String    @default("")
+  discount  Float     @default(0)
+  expiredAt DateTime? @default(now())
+  Product   Product[]
+}
+
 model Product {
   id                 String             @id @default(uuid())
   productName        String
   productDescription String             @db.Text
   cost               Float              @default(0.00)
   subscription       Boolean
-  promoCode          String
+  promoCode          Int
+  promotion          Promotion          @relation(fields: [promoCode], references: [id])
   UserSubscription   UserSubscription[]
 }
 

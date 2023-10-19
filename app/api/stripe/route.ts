@@ -1,7 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs";
 import { NextResponse, NextRequest } from "next/server";
 
-
 import prismadb from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
@@ -23,83 +22,91 @@ export async function GET(req: NextRequest) {
     var insertData: any[] = [];
 
     const productIdsTmp = body.get("productIds");
-    const productIds:string[] = JSON.parse(productIdsTmp);
+    const productIds: string[] = JSON.parse(productIdsTmp);
     const type = body.get("type");
 
-    if(type == "subscription") {
+    if (type == "subscription") {
       const params = body.get("params");
       const price = params.split("_")[0];
       const period = params.split("_")[1];
       totalAmount = price;
       let timePeriod = 1;
-        switch(period) {
-          case "oneMonth":
-            timePeriod = 1;
+      switch (period) {
+        case "oneMonth":
+          timePeriod = 1;
           break;
-          case "threeMonth":
-            timePeriod = 3;
+        case "threeMonth":
+          timePeriod = 3;
           break;
-          case "semiAnnual":
-            timePeriod = 6;
+        case "semiAnnual":
+          timePeriod = 6;
           break;
-          case "yearly":
-            timePeriod = 12;
+        case "yearly":
+          timePeriod = 12;
           break;
-          case "MLSemiAnnual":
-            timePeriod = 6;
-            break;
-          case "MLyearly":
-            timePeriod = 12;
-            break;
-          default:
-            timePeriod = period;
-            totalAmount = period * price;
-            break;
-        }
-          
-        var nowTime = new Date();
-        var periodTime  = nowTime.setMonth(nowTime.getMonth()+timePeriod);
+        case "MLSemiAnnual":
+          timePeriod = 6;
+          break;
+        case "MLyearly":
+          timePeriod = 12;
+          break;
+        default:
+          timePeriod = period;
+          totalAmount = period * price;
+          break;
+      }
 
-        insertData = [{
+      var nowTime = new Date();
+      var periodTime = nowTime.setMonth(nowTime.getMonth() + timePeriod);
+
+      insertData = [
+        {
           userId: userId,
           productId: productIds[0],
           stripeSubscriptionId: "",
           stripeCustomerId: "",
           stripePriceId: "",
           stripeCurrentPeriodEnd: new Date(periodTime),
-        }]
+        },
+      ];
+    } else {
+      let productList = await prismadb.product.findMany({
+        include: {
+          promotion: true,
+        },
+        where: {
+          id: {
+            in: productIds,
+          },
+        },
+      });
 
-      } else {
-        let productList = await prismadb.product.findMany({
-          where: {
-            id: {
-              in: productIds
-            }
-          }
-        })
-    
-        productList.map((item, key) => {
-          totalAmount += item.cost;
-          insertData.push({
-            userId: userId,
-            productId: item.id,
-            stripeSubscriptionId: "",
-            stripeCustomerId: "",
-            stripePriceId: "",
-            stripeCurrentPeriodEnd: new Date(),
-          })
-        })
-      }
+      productList.map((item, key) => {
+        const cost =
+          item.promotion.expiredAt < Date.now()
+            ? item.cost
+            : (item.cost * (100 - item.promotion.discount)) / 100;
+        totalAmount += cost;
+        insertData.push({
+          userId: userId,
+          productId: item.id,
+          stripeSubscriptionId: "",
+          stripeCustomerId: "",
+          stripePriceId: "",
+          stripeCurrentPeriodEnd: new Date(),
+        });
+      });
+    }
 
     await prismadb.userSubscription.deleteMany({
       where: {
         userId: userId,
-        purchaseStatus: 0
-      }
-    })
+        purchaseStatus: 0,
+      },
+    });
     await prismadb.userSubscription.createMany({
-      data: insertData
-    })
+      data: insertData,
+    });
 
     // const userSubscription = await prismadb.userSubscription.findUnique({
     //   where: {
@@ -130,7 +137,7 @@ export async function GET(req: NextRequest) {
             currency: "USD",
             product_data: {
               name: "Companion Pro",
-              description: "Create Custom AI Companions"
+              description: "Create Custom AI Companions",
             },
             unit_amount: totalAmount * 100,
           },
@@ -140,11 +147,11 @@ export async function GET(req: NextRequest) {
       metadata: {
         userId,
       },
-    })
+    });
 
-    return new NextResponse(JSON.stringify({ url: stripeSession.url }))
+    return new NextResponse(JSON.stringify({ url: stripeSession.url }));
   } catch (error) {
     console.log("[STRIPE]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-};
+}
