@@ -116,7 +116,7 @@ export const Subscriptions = ({
       setcustomSubscription(true);
       setSubscriptionTypeLabel(category.oneMonth.toString());
       setSubscriptionParams(
-        "&params=" + category.oneMonth.toString() + "_" + value
+        "&params=" + category.oneMonth.toString() + "_1"
       );
     } else {
       setcustomSubscription(false);
@@ -130,6 +130,9 @@ export const Subscriptions = ({
   const changeSubscriptionMonth = (value: string) => {
     setSubscriptionTypeLabel(
       (category.oneMonth * parseFloat(value)).toString()
+    );
+    setSubscriptionParams(
+      "&params=" + category.oneMonth.toString() + "_" + value
     );
   };
 
@@ -348,13 +351,14 @@ export const Subscriptions = ({
                   <TableCell>{key + 1}</TableCell>
                   <TableCell>{item.product.productName}</TableCell>
                   <TableCell>
-                    {item.promotion.expiredAt < Date.now()
+                    {/* {item.promotion.expiredAt < Date.now()
                       ? `$${item.product.cost}`
                       : `$${
                           (item.product.cost *
                             (100 - item.promotion.discount)) /
                           100
-                        }`}
+                        }`} */}
+                        ${item.product.cost}
                   </TableCell>
                   <TableCell>
                     {!item.product.subscription

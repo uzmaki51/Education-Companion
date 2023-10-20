@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   try {
     const { userId } = auth();
     const user = await currentUser();
+
     const body = req.nextUrl.searchParams;
 
     if (!userId || !user) {
@@ -56,12 +57,19 @@ export async function GET(req: NextRequest) {
           break;
       }
 
+      var userDBId = await prismadb.user.findFirst({
+        where: {
+          userId: userId
+        }
+      })
+
+      userDBId = userDBId?.id;
       var nowTime = new Date();
-      var periodTime = nowTime.setMonth(nowTime.getMonth() + timePeriod);
+      var periodTime = nowTime.setMonth(parseInt(nowTime.getMonth()) + parseInt(timePeriod));
 
       insertData = [
         {
-          userId: userId,
+          userId: userDBId,
           productId: productIds[0],
           stripeSubscriptionId: "",
           stripeCustomerId: "",
@@ -88,7 +96,7 @@ export async function GET(req: NextRequest) {
             : (item.cost * (100 - item.promotion.discount)) / 100;
         totalAmount += cost;
         insertData.push({
-          userId: userId,
+          userId: userDBId,
           productId: item.id,
           stripeSubscriptionId: "",
           stripeCustomerId: "",
@@ -100,7 +108,7 @@ export async function GET(req: NextRequest) {
 
     await prismadb.userSubscription.deleteMany({
       where: {
-        userId: userId,
+        userId: userDBId,
         purchaseStatus: 0,
       },
     });
@@ -145,7 +153,7 @@ export async function GET(req: NextRequest) {
         },
       ],
       metadata: {
-        userId,
+        userDBId,
       },
     });
 

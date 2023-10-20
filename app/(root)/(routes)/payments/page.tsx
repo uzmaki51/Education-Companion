@@ -33,7 +33,7 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
     where: {
       AND: [
         {
-          userId: user?.id,
+          userId: userData?.id,
         },
         {
           purchaseStatus: 1,
@@ -47,6 +47,7 @@ const RootPage = async ({ searchParams }: RootPageProps) => {
       promotion: true,
     },
   });
+  console.log(product)
 
   return (
     <>

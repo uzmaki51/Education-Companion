@@ -42,7 +42,7 @@ model User {
   experienced      Boolean?
   isML             Boolean  @default(false)
   broker           String   @default("")
-  comment          String   @default("") @db.Text
+  comment          String   @db.Text
   paymentTxHash    String   @default("")
   channelId        String   @default("")
 
